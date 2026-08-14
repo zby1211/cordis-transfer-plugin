@@ -3,4 +3,4 @@ npm-cache/
 node_modules/
 *.tgz
 .DS_Store
-vscode/
+.vscode/
