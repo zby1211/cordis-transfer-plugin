@@ -9,15 +9,10 @@ DSH Web 重启后：**Settings → Plugins → 「导入 / 导出」** 标签页
 
 - 列出当前活动会话的动态插件（可多选）
 - **导出插件包**：勾选 1 个或多个插件（可填清单名称/描述）→ 浏览器直接下载 `.dsh-cordis-bundle.zip`；只勾选 1 个时 zip 内只含该插件
-- **导入插件**：本地文件选择框（`.zip`，兼容旧 `.json`）→ 上传到 Host 自动识别并导入
-- 导入（未激活）后 Host 会补发刷新事件，插件会立即出现在底部 **Cordis Plugin** 面板中供用户手动激活
-- 不再需要填写任何文件路径
+- **导入插件**：本地文件选择框（`.zip`，兼容旧 `.json`）→ 上传到 Host 自动识别并导入；导入后插件会出现在 **Cordis Plugin** 面板中，可手动激活
 
 Client half 通过包私有 Remote（namespace `cordisTransfer`）调用 Host：
 `listPlugins` / `exportBundlePayload` / `importPayload`。
-Host 侧以 `Remote` 标记走 api-gateway 的 SRC 发现，Client 侧在 `client.js`
-中自挂载严格描述符（`ctx.remote.$mount`），无需重建 `dsh-api-remotes`
-或运行 typert 编译器。
 
 ## 模型工具
 
@@ -61,8 +56,6 @@ Host 侧以 `Remote` 标记走 api-gateway 的 SRC 发现，Client 侧在 `clien
    }
    ```
 4. 重启 `dsh web`，打开 **Settings → Plugins → 导入 / 导出** 使用。
-
-安装物位于 `$DSH_HOME/profiles/web/node_modules/cordis-transfer-plugin/`（从 tarball 解包的真实副本，不是源码软链）。
 
 ### 从源码构建
 
