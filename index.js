@@ -20,8 +20,8 @@ function dshHome() {
   return raw && raw.length > 0 ? raw : join(homedir(), '.dsh')
 }
 
-// 与 kb-agent-plugin 相同的解析锚点策略：link: 安装会 realpath 到 profile 树外，
-// 直接 import 会解析不到 @deepseek-ai/dsh-tools；先锚到 profile 的平铺 node_modules。
+// 解析锚点策略：本包可能以 tarball/软链安装到 profile 树外，
+// 因此先锚到 DSH profile 的平铺 node_modules 解析 @deepseek-ai/dsh-tools。
 function harnessRequire() {
   const bases = [join(dshHome(), 'profiles', 'noop.cjs')]
   if (process.argv[1]) bases.push(process.argv[1])

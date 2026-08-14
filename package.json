@@ -13,7 +13,8 @@
   "files": [
     "index.js",
     "client.js",
-    "cordis.patch.yml"
+    "cordis.patch.yml",
+    "doc"
   ],
   "dsh": {
     "bundle": {
@@ -29,9 +30,9 @@
     }
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-tools": "*",
-    "@deepseek-ai/dsh-typert-protocol": "*",
-    "fflate": "*"
+    "@deepseek-ai/dsh-tools": ">=0.1.0-rc.6",
+    "@deepseek-ai/dsh-typert-protocol": ">=0.1.0-rc.6",
+    "fflate": "^0.8.3"
   },
   "repository": {
     "type": "git",
