@@ -3,7 +3,7 @@
 DSH 持久化插件：导入/导出本会话创建的动态 Cordis Plugin。
 两种界面：模型工具（agent 可调用）+ 浏览器设置面板（人可直接操作，浏览器下载/上传）。
 
-## 浏览器面板（v1.2.1）
+## 浏览器面板（v0.2.1）
 
 DSH Web 重启后：**Settings → Plugins → 「导入 / 导出」** 标签页（tab id `transfer`）：
 
