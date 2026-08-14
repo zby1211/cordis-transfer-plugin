@@ -1,0 +1,5 @@
+# cordis-transfer-plugin bundle patch：把持久化导入/导出工具挂载进 profile 层栈。
+# dsh plugin add 安装后，本 patch 经 package.json 的 dsh.bundle.patch 自动作为一层叠加。
+- insert:
+    - id: cordis-transfer-tools
+      name: 'cordis-transfer-plugin'
