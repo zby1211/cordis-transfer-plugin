@@ -49,11 +49,6 @@ window.__ModuleLoader__.load({
       hidden: { display: "none" }
     }
 
-    function downloadText(filename, text, contentType) {
-      const blob = new Blob([text], { type: contentType || "application/json" })
-      triggerDownload(filename, blob)
-    }
-
     function downloadBase64(filename, base64, contentType) {
       const binary = atob(base64)
       const bytes = new Uint8Array(binary.length)
@@ -217,8 +212,8 @@ window.__ModuleLoader__.load({
 
         React.createElement("section", { style: S.card },
           React.createElement("h3", { style: S.title }, "导入插件（本地文件上传）"),
-          React.createElement("p", { style: S.hint }, "支持单插件 JSON 和插件包 zip；选择文件后自动识别并导入。" ),
-          React.createElement("input", { ref: fileInputRef, type: "file", accept: ".json,.zip,application/json,application/zip", style: S.hidden, onChange: handleFile }),
+          React.createElement("p", { style: S.hint }, "选择 zip 插件包后自动上传导入。" ),
+          React.createElement("input", { ref: fileInputRef, type: "file", accept: ".zip,application/zip", style: S.hidden, onChange: handleFile }),
           React.createElement("div", { style: S.row },
             React.createElement("label", { style: S.check },
               React.createElement("input", { type: "checkbox", checked: activate, onChange: (event) => setActivate(event.target.checked) }),

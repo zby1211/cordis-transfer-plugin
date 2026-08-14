@@ -1,9 +1,7 @@
 // cordis-transfer-plugin：DSH Profile Bundle（host 平面）。
 // 持久化版 Cordis Plugin 导入/导出工具集：
-//   cordis_plugin_list / cordis_plugin_import /
-//   cordis_plugin_bundle_export / cordis_plugin_bundle_import
-// 导出统一走 zip 插件包：一个或多个插件都打包为
-//   manifest.json + plugins/<pluginId>.json
+//   cordis_plugin_list / cordis_plugin_bundle_export / cordis_plugin_bundle_import
+// 导入/导出统一使用 zip 插件包：manifest.json + plugins/<pluginId>.json
 // 工具在 Host 组合注册，执行时从 exec.agent.ctx 解析当前 agent 作用域里的
 // dynamicCordisRunner 服务，因此支持 cordis 预设下的每个会话导入/导出其自有动态 Plugin。
 import { homedir } from 'node:os'
@@ -42,9 +40,6 @@ export async function apply(ctx) {
   const peerRequire = harnessRequire()
   const { defineTool } = await import(pathToFileURL(peerRequire.resolve('@deepseek-ai/dsh-tools')))
 
-  const fs = ctx.get('fs')
-  if (fs === undefined) throw new Error('cordis-transfer-plugin requires the host fs service')
-
   const FORMAT_SINGLE = 'dsh-cordis-plugin'
   const FORMAT_BUNDLE = 'dsh-cordis-plugin-bundle'
   const FORMAT_VERSION = 1
@@ -71,19 +66,6 @@ export async function apply(ctx) {
 
   function isRecord(v) {
     return v !== null && typeof v === 'object' && !Array.isArray(v)
-  }
-
-  async function readJsonFile(path) {
-    const target = await fs.resolve(String(path))
-    const text = await fs.readText(target)
-    return JSON.parse(text)
-  }
-
-  async function writeJsonFile(path, value) {
-    const target = await fs.resolve(String(path))
-    const content = JSON.stringify(value, null, 2) + '\n'
-    await fs.writeText(target, content)
-    return { path: String(path), bytes: content.length }
   }
 
   function derivePrefix(pluginId) {
@@ -386,41 +368,17 @@ export async function apply(ctx) {
   async function importPayloadBytes(agent, runner, bytes, filename, activate) {
     const lower = String(filename || '').toLowerCase()
     const hasZipMagic = bytes.length >= 2 && bytes[0] === 0x50 && bytes[1] === 0x4b
-    if (hasZipMagic || lower.endsWith('.zip')) {
-      const records = parseBundleZip(bytes)
-      const imported = await importBundle(agent, runner, records, activate)
-      return {
-        format: FORMAT_BUNDLE,
-        importedCount: imported.length,
-        activated: imported.some(function (entry) { return entry.activation !== null }),
-        imported: imported
-      }
+    if (!hasZipMagic && !lower.endsWith('.zip')) {
+      throw new Error('unsupported plugin file: expected a ' + FORMAT_BUNDLE + ' zip bundle')
     }
-    let doc
-    try {
-      doc = JSON.parse(bytes.toString('utf8'))
-    } catch (error) {
-      throw new Error('uploaded file is neither a JSON plugin document nor a plugin bundle zip')
+    const records = parseBundleZip(bytes)
+    const imported = await importBundle(agent, runner, records, activate)
+    return {
+      format: FORMAT_BUNDLE,
+      importedCount: imported.length,
+      activated: imported.some(function (entry) { return entry.activation !== null }),
+      imported: imported
     }
-    if (isRecord(doc) && doc.format === FORMAT_SINGLE && doc.version === FORMAT_VERSION) {
-      const result = await importOne(agent, runner, doc.plugin, activate)
-      return {
-        format: FORMAT_SINGLE,
-        importedCount: 1,
-        activated: result.activation !== null,
-        imported: [result]
-      }
-    }
-    if (isRecord(doc) && doc.format === FORMAT_BUNDLE && doc.version === FORMAT_VERSION && Array.isArray(doc.plugins) && doc.plugins.length > 0) {
-      const imported = await importBundle(agent, runner, doc.plugins, activate)
-      return {
-        format: FORMAT_BUNDLE,
-        importedCount: imported.length,
-        activated: imported.some(function (entry) { return entry.activation !== null }),
-        imported: imported
-      }
-    }
-    throw new Error('unsupported plugin file: expected ' + FORMAT_SINGLE + ' JSON or ' + FORMAT_BUNDLE + ' zip')
   }
 
   const executors = {}
@@ -515,19 +473,6 @@ export async function apply(ctx) {
     return { plugins: runner.listPlugins(agent).map(pluginSummary) }
   })
 
-  registerTool('cordis_plugin_import', '从旧版 cordis_plugin_export 留下的单插件 JSON 文件导入一个 Cordis Plugin（新版统一走 zip 插件包）；按原顺序为每个 Package 建立新的不可变版本并给出 packageId 映射；activate=true 时激活导出时的 currentPackageId（含 Client 代码时可能进入审批）。', {
-    path: { type: 'string', required: true, description: '要导入的 JSON 文件绝对路径。' },
-    activate: { type: 'boolean', description: '导入后是否立即运行导出时的 current 版本；默认 false（只建立定义）。' }
-  }, async function (args, exec) {
-    const { agent, runner } = resolveContext(exec)
-    const doc = await readJsonFile(args.path)
-    if (!isRecord(doc)) throw new Error('import file must contain a JSON object')
-    if (doc.format !== FORMAT_SINGLE) throw new Error('expected format "' + FORMAT_SINGLE + '", got "' + str(doc.format) + '" — use the matching import tool')
-    if (doc.version !== FORMAT_VERSION) throw new Error('unsupported format version ' + str(doc.version) + '; supported: ' + FORMAT_VERSION)
-    const result = await importOne(agent, runner, doc.plugin, args.activate === true)
-    return { ok: true, format: FORMAT_SINGLE, activated: result.activation !== null, result: result }
-  })
-
   registerTool('cordis_plugin_bundle_export', '把一个或多个动态 Cordis Plugin 连同 manifest 清单导出为 zip 插件包（manifest.json + plugins/<pluginId>.json，格式 dsh-cordis-plugin-bundle）；只选一个插件时 zip 内只含该插件。', {
     pluginIds: { type: 'array', items: { type: 'string' }, required: true, description: '要导出的一组稳定 pluginId。' },
     path: { type: 'string', required: true, description: '导出 zip 插件包文件的绝对路径。' },
@@ -562,7 +507,7 @@ export async function apply(ctx) {
     }
   })
 
-  registerTool('cordis_plugin_bundle_import', '从 zip 插件包（manifest.json + plugins/*.json）导入全部 Cordis Plugin，也兼容旧的单 JSON bundle；activate=true 时激活各 Plugin 的 current 版本（含 Client 代码时可能进入审批）。任一 Plugin 导入失败会回滚本次已导入的 Plugin。', {
+  registerTool('cordis_plugin_bundle_import', '从 zip 插件包（manifest.json + plugins/*.json）导入全部 Cordis Plugin；activate=true 时激活各 Plugin 的 current 版本（含 Client 代码时可能进入审批）。任一 Plugin 导入失败会回滚本次已导入的 Plugin。', {
     path: { type: 'string', required: true, description: '要导入的 zip 插件包文件绝对路径。' },
     activate: { type: 'boolean', description: '导入后是否立即运行各 Plugin 的 current 版本；默认 false（只建立定义）。' }
   }, async function (args, exec) {
