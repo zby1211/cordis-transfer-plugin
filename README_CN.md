@@ -3,9 +3,9 @@
 DSH 持久化插件：导入/导出本会话创建的动态 Cordis Plugin。
 两种界面：模型工具（agent 可调用）+ 浏览器设置面板（人可直接操作，浏览器下载/上传）。
 
-## 浏览器面板（v0.1.0）
+## 浏览器面板
 
-DSH Web 重启后：**Settings → Plugins → 「导入 / 导出」** 标签页（tab id `transfer`）：
+DSH Web 重启后：**Settings → Plugins → 「导入 / 导出」** 标签页：
 
 - 列出当前活动会话的动态插件（可多选）
 - **导出插件包**：勾选 1 个或多个插件（可填清单名称/描述）→ 浏览器直接下载 `.dsh-cordis-bundle.zip`；只勾选 1 个时 zip 内只含该插件
@@ -19,7 +19,7 @@ DSH Web 重启后：**Settings → Plugins → 「导入 / 导出」** 标签页
 | `cordis_plugin_bundle_export` | 1 个或多个 Plugin 导出为 **zip** 插件包文件 |
 | `cordis_plugin_bundle_import` | 从 zip 插件包导入 |
 
-## 安装（下载并安装）
+## 安装
 
 本插件是静态 profile bundle（非内存动态插件），通过 GitHub Release 的 tarball 安装：
 

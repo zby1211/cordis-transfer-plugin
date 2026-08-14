@@ -6,10 +6,9 @@ Settings panel for download/upload workflows.
 
 > 中文说明见 [README_CN.md](README_CN.md)。
 
-## Browser panel (v0.1.0)
+## Browser panel
 
-After restarting `dsh web`, open **Settings → Plugins → Import / Export**
-(tab id `transfer`):
+Open **Settings → Plugins → Import / Export**:
 
 - List the current session's dynamic plugins (multi-select)
 - **Export bundle**: select one or more plugins (optional manifest name/description)
@@ -26,7 +25,7 @@ After restarting `dsh web`, open **Settings → Plugins → Import / Export**
 | `cordis_plugin_bundle_export` | Export one or more plugins as a zip bundle file |
 | `cordis_plugin_bundle_import` | Import plugins from a zip bundle |
 
-## Installation (download and install)
+## Installation
 
 This is a static profile bundle (not an in-memory dynamic plugin). Install the
 tarball from GitHub Releases:
