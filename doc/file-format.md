@@ -1,18 +1,19 @@
-# 插件包格式
+# Bundle File Format / 插件包格式
 
+Exports and imports use a single zip bundle format, conventionally named `*.dsh-cordis-bundle.zip`.
 导出与导入统一使用 zip 插件包，扩展名约定为 `.dsh-cordis-bundle.zip`。
 
-## 目录结构
+## Layout / 目录结构
 
 ```
 <name>.dsh-cordis-bundle.zip
-├── manifest.json          # 包清单
+├── manifest.json          # Bundle manifest / 包清单
 └── plugins/
-    ├── <pluginId>.json    # 每个插件一个文档
+    ├── <pluginId>.json    # One document per plugin / 每个插件一个文档
     └── ...
 ```
 
-## manifest.json
+## manifest.json / 包清单
 
 ```json
 {
@@ -37,9 +38,7 @@
 }
 ```
 
-## plugins/<pluginId>.json
-
-每个插件文档：
+## plugins/<pluginId>.json / 每个插件文档
 
 ```json
 {
@@ -65,9 +64,9 @@
 }
 ```
 
-## 规则
+## Rules / 规则
 
-- `currentPackageId` / `nextPackageId` 可选，引用必须是 packages 中的 `packageId`
-- `code.host` / `code.client` 至少存在一个
-- 导入时 pluginId / packageId 由 Host 重新铸造，并返回新旧映射
-- 含 Client 代码且 `activate=true` 时进入正常审批流程
+- `currentPackageId` / `nextPackageId` are optional and must reference a `packageId` in `packages` / `currentPackageId` / `nextPackageId` 可选，必须引用 packages 中的 `packageId`
+- At least one of `code.host` / `code.client` must exist / `code.host` / `code.client` 至少存在一个
+- On import, the Host mints new pluginId / packageId values and returns the old-to-new mapping / 导入时 pluginId / packageId 由 Host 重新铸造，并返回新旧映射
+- Plugins with Client code enter the normal approval flow when `activate=true` / 含 Client 代码且 `activate=true` 时进入正常审批流程

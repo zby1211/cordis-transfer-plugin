@@ -52,8 +52,8 @@ tarball from GitHub Releases:
    ```
 4. Restart `dsh web` and open **Settings → Plugins → Import / Export**.
 
-## Documentation
+## Documentation / 文档
 
-- [Code structure and implementation](doc/architecture.md) (Chinese)
-- [Bundle file format](doc/file-format.md) (Chinese)
-- [Build and verification](doc/development.md) (Chinese)
+- [Code structure and implementation / 代码结构与实现](doc/architecture.md) (bilingual / 中英双行)
+- [Bundle file format / 插件包格式](doc/file-format.md) (bilingual / 中英双行)
+- [Build and verification / 构建与验证](doc/development.md) (bilingual / 中英双行)
