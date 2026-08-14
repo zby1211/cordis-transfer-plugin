@@ -38,28 +38,40 @@ Host 侧以 `Remote` 标记走 api-gateway 的 SRC 发现，Client 侧在 `clien
 导入时 pluginId/packageId 由 Host 重新铸造（保持 `idPrefix` 语义前缀），返回新旧映射；
 含 Client 代码的 `activate=true` 会进入正常审批流程。
 
-## 持久化与部署
+## 安装（下载并安装）
 
-本插件是静态 profile bundle（非内存动态插件），以 **tarball 独立包**方式安装进 web profile：
+本插件是静态 profile bundle（非内存动态插件），通过 GitHub Release 的 tarball 安装：
 
-- 源码（打包源）：本仓库根目录 `cordis-transfer-plugin/`
-- 发布物：`cordis-transfer-plugin/dist/cordis-transfer-plugin-1.2.1.tgz`
-- profile 依赖：`$DSH_HOME/profiles/web/package.json`
-  ```json
-  "cordis-transfer-plugin": "file:<workspace>/cordis-transfer-plugin/dist/cordis-transfer-plugin-1.2.1.tgz"
-  ```
-- 注册点：同文件 `dsh.profile.bundles` 中的 `"cordis-transfer-plugin"`
-- 安装物：`$DSH_HOME/profiles/web/node_modules/cordis-transfer-plugin/`（从 tarball 解包的真实副本，不是工作区软链）
+1. 打开 Releases 页面，下载最新版 `cordis-transfer-plugin-<version>.tgz`
+2. 安装进 web profile：
+   ```bash
+   dsh plugin --profile web add /path/to/cordis-transfer-plugin-<version>.tgz
+   ```
+3. 确保 profile 注册了该 bundle：`$DSH_HOME/profiles/web/package.json`
+   ```json
+   {
+     "dsh": {
+       "profile": {
+         "bundles": ["...", "cordis-transfer-plugin"]
+       }
+     },
+     "dependencies": {
+       "cordis-transfer-plugin": "file:<path>/cordis-transfer-plugin-<version>.tgz"
+     }
+   }
+   ```
+4. 重启 `dsh web`，打开 **Settings → Plugins → 导入 / 导出** 使用。
 
-重新打包并升级（改源码后）：
+安装物位于 `$DSH_HOME/profiles/web/node_modules/cordis-transfer-plugin/`（从 tarball 解包的真实副本，不是源码软链）。
+
+### 从源码构建
 
 ```bash
-cd cordis-transfer-plugin
 npm pack --pack-destination ./dist --cache ./npm-cache
-dsh plugin --profile web add file:$PWD/dist/cordis-transfer-plugin-1.2.1.tgz
+dsh plugin --profile web add file:$PWD/dist/cordis-transfer-plugin-<version>.tgz
 ```
 
-验证组合树与 client bundle：
+### 验证
 
 ```bash
 dsh --profile web --dump-config | grep -A2 cordis-transfer

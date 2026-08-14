@@ -33,5 +33,9 @@
     "@deepseek-ai/dsh-typert-protocol": "*",
     "fflate": "*"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zby1211/cordis-transfer-plugin.git"
+  },
   "license": "MIT"
 }
