@@ -21,9 +21,23 @@ DSH Web 重启后：**Settings → Plugins → 「导入 / 导出」** 标签页
 
 ## 安装
 
-本插件是静态 profile bundle（非内存动态插件），可从 npm 或 GitHub Release 的 tarball 安装：
+本插件是静态 profile bundle（非内存动态插件）。
 
-**从 npm：**
+**从 npm（推荐）：**
+
+```bash
+dsh plugin --profile web add cordis-transfer-plugin
+```
+
+`dsh plugin add` 会安装该包，并因本包声明了 `dsh.bundle.patch` 而自动把它加入 `dsh.profile.bundles`。安装后重启 `dsh web`。
+
+普通 Node 项目也可以：
+
+```bash
+npm install cordis-transfer-plugin
+```
+
+**从本地 tarball：**
 
 ```bash
 npm pack cordis-transfer-plugin

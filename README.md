@@ -27,10 +27,25 @@ Open **Settings → Plugins → Import / Export**:
 
 ## Installation
 
-This is a static profile bundle (not an in-memory dynamic plugin). Install it
-from npm or from a GitHub Release tarball.
+This is a static profile bundle (not an in-memory dynamic plugin).
 
-**From npm:**
+**From npm (recommended):**
+
+```bash
+dsh plugin --profile web add cordis-transfer-plugin
+```
+
+`dsh plugin add` installs the package and, because this package declares
+`dsh.bundle.patch`, automatically appends it to `dsh.profile.bundles`.
+Restart `dsh web` after installation.
+
+For a plain Node project, you can also run:
+
+```bash
+npm install cordis-transfer-plugin
+```
+
+**From a local tarball:**
 
 ```bash
 npm pack cordis-transfer-plugin
