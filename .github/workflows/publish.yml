@@ -20,10 +20,12 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: 22
-          # Note: no registry-url / token here — publishing uses npm Trusted
-          # Publishing (OIDC). A registry-url would make setup-node write an
-          # .npmrc that can shadow the OIDC credential.
+          node-version: 24
+          # OIDC trusted publishing requires npm >= 11.5.1. Node 22 LTS ships
+          # npm 10.x which has no OIDC auto-detection, so pin npm 11 explicitly.
+          # No registry-url / token here: the CLI must auto-detect the GitHub
+          # Actions OIDC environment (a registry-url would shadow it with .npmrc).
+          npmVersion: 11
 
       - name: Validate tag matches package version
         if: startsWith(github.ref, 'refs/tags/v')
