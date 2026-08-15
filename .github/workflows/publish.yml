@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   publish:
@@ -27,22 +28,29 @@ jobs:
           mkdir -p dist
           npm pack --pack-destination ./dist
 
-      - name: Verify npm auth
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.CORDIS_NPM_TOKEN }}
-        run: npm whoami
-
       - name: Publish to npm
-        run: npm publish ./dist/cordis-transfer-plugin-*.tgz --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.CORDIS_NPM_TOKEN }}
+        id: npm
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "cordis-transfer-plugin@${VERSION}" version >/dev/null 2>&1; then
+            echo "Version ${VERSION} already exists on npm; skipping publish."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+          else
+            npm publish ./dist/cordis-transfer-plugin-*.tgz --access public --provenance
+            echo "skipped=false" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Create GitHub Release
+      - name: Create or update GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ secrets.CORDIS_GITHUB_TOKEN }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
-            dist/cordis-transfer-plugin-*.tgz \
-            --title "${GITHUB_REF_NAME}" \
-            --generate-notes
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "Release ${GITHUB_REF_NAME} exists; uploading asset."
+            gh release upload "${GITHUB_REF_NAME}" dist/cordis-transfer-plugin-*.tgz --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" \
+              dist/cordis-transfer-plugin-*.tgz \
+              --title "${GITHUB_REF_NAME}" \
+              --generate-notes
+          fi

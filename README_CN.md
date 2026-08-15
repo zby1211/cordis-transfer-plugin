@@ -37,34 +37,23 @@ dsh plugin --profile web add cordis-transfer-plugin
 npm install cordis-transfer-plugin
 ```
 
-**从本地 tarball：**
+**从 tarball（GitHub Releases 或本地构建）：**
+
+先获得 tarball：
+
+- GitHub Releases：下载 `cordis-transfer-plugin-<version>.tgz`，或
+- 本地构建：
+  ```bash
+  npm pack cordis-transfer-plugin
+  ```
+
+然后安装进 web profile：
 
 ```bash
-npm pack cordis-transfer-plugin
-dsh plugin --profile web add ./cordis-transfer-plugin-<version>.tgz
+dsh plugin --profile web add /path/to/cordis-transfer-plugin-<version>.tgz
 ```
 
-**从 GitHub Releases：**
-
-1. 打开 Releases 页面，下载最新版 `cordis-transfer-plugin-<version>.tgz`
-2. 安装进 web profile：
-   ```bash
-   dsh plugin --profile web add /path/to/cordis-transfer-plugin-<version>.tgz
-   ```
-3. 确保 profile 注册了该 bundle：`$DSH_HOME/profiles/web/package.json`
-   ```json
-   {
-     "dsh": {
-       "profile": {
-         "bundles": ["...", "cordis-transfer-plugin"]
-       }
-     },
-     "dependencies": {
-       "cordis-transfer-plugin": "file:<path>/cordis-transfer-plugin-<version>.tgz"
-     }
-   }
-   ```
-4. 重启 `dsh web`，打开 **Settings → Plugins → 导入 / 导出** 使用。
+安装后重启 `dsh web`。
 
 ## 文档
 

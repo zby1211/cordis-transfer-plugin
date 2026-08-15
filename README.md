@@ -45,35 +45,23 @@ For a plain Node project, you can also run:
 npm install cordis-transfer-plugin
 ```
 
-**From a local tarball:**
+**From a tarball (GitHub Releases or local build):**
+
+Get the tarball first:
+
+- GitHub Releases: download `cordis-transfer-plugin-<version>.tgz`, or
+- Local build:
+  ```bash
+  npm pack cordis-transfer-plugin
+  ```
+
+Then install it into the web profile:
 
 ```bash
-npm pack cordis-transfer-plugin
-dsh plugin --profile web add ./cordis-transfer-plugin-<version>.tgz
+dsh plugin --profile web add /path/to/cordis-transfer-plugin-<version>.tgz
 ```
 
-**From GitHub Releases:**
-
-1. Download the latest `cordis-transfer-plugin-<version>.tgz` from Releases.
-2. Install it into the web profile:
-   ```bash
-   dsh plugin --profile web add /path/to/cordis-transfer-plugin-<version>.tgz
-   ```
-3. Make sure the profile registers the bundle in
-   `$DSH_HOME/profiles/web/package.json`:
-   ```json
-   {
-     "dsh": {
-       "profile": {
-         "bundles": ["...", "cordis-transfer-plugin"]
-       }
-     },
-     "dependencies": {
-       "cordis-transfer-plugin": "file:<path>/cordis-transfer-plugin-<version>.tgz"
-     }
-   }
-   ```
-4. Restart `dsh web` and open **Settings → Plugins → Import / Export**.
+Restart `dsh web` after installation.
 
 ## Documentation
 
