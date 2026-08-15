@@ -14,8 +14,8 @@
     "index.js",
     "client.js",
     "cordis.patch.yml",
-    "doc",
-    "README_CN.md"
+    "docs",
+    "README.zh-CN.md"
   ],
   "dsh": {
     "bundle": {

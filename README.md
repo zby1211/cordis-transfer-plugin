@@ -4,7 +4,7 @@ A persistent DSH plugin for importing and exporting dynamic Cordis Plugins.
 It provides two interfaces: model tools (callable by the agent) and a browser
 Settings panel for download/upload workflows.
 
-> 中文说明见 [README_CN.md](README_CN.md)。
+> 中文说明见 [README.zh-CN.md](README.zh-CN.md)。
 
 ## Browser panel
 
@@ -65,6 +65,6 @@ Restart `dsh web` after installation.
 
 ## Documentation
 
-- [Code structure and implementation](doc/architecture.md)
-- [Bundle file format](doc/file-format.md)
-- [Build and verification](doc/development.md)
+- [Code structure and implementation](docs/architecture.md)
+- [Bundle file format](docs/file-format.md)
+- [Build and verification](docs/development.md)

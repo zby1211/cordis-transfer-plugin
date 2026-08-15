@@ -12,7 +12,7 @@ cordis-transfer-plugin/
 ├── client.js
 ├── cordis.patch.yml
 ├── package.json
-└── doc/
+└── docs/
 ```
 
 `index.js` is the Host plugin with model tools and the Remote service.
