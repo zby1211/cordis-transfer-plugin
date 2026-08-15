@@ -27,6 +27,11 @@ jobs:
           mkdir -p dist
           npm pack --pack-destination ./dist
 
+      - name: Verify npm auth
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.CORDIS_NPM_TOKEN }}
+        run: npm whoami
+
       - name: Publish to npm
         run: npm publish ./dist/cordis-transfer-plugin-*.tgz --access public
         env:
