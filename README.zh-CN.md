@@ -57,6 +57,6 @@ dsh plugin --profile web add /path/to/cordis-transfer-plugin-<version>.tgz
 
 ## 文档
 
-- [代码结构与实现](doc/architecture.md)
-- [插件包格式](doc/file-format.md)
-- [构建与验证](doc/development.md)
+- [代码结构与实现](docs/architecture.md)
+- [插件包格式](docs/file-format.md)
+- [构建与验证](docs/development.md)
