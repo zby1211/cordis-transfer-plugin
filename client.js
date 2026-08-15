@@ -34,6 +34,65 @@ window.__ModuleLoader__.load({
       ]
     };
 
+    // 面板文案走 locale。注册 cordisTransfer 命名空间的 zh/en 两个字典。
+    const NS = "cordisTransfer"
+    const zh = {
+      "tab.title": "导入 / 导出",
+      "no.session": "没有活动会话。请先打开一个会话，再使用导入 / 导出。",
+      "list.title": "本会话动态插件",
+      "list.hint": "列出当前会话用 cordis_define 创建的动态 Cordis Plugin。勾选后可直接下载插件包。",
+      "list.loading": "读取中…",
+      "list.refresh": "刷新",
+      "list.empty": "暂无动态插件。",
+      "list.current": "当前版本 {current} · {count} 个 Package",
+      "list.selectAll": "全选",
+      "list.clear": "清空选择",
+      "import.title": "导入插件（本地文件上传）",
+      "import.hint": "选择 zip 插件包后自动上传导入。",
+      "import.activate": "导入后立即激活 current 版本",
+      "import.button": "选择文件并导入",
+      "import.reading": "正在读取并上传 {name} …",
+      "export.title": "导出插件包 zip（浏览器下载）",
+      "export.hint": "已选 {count} 个插件；勾选 1 个插件时 zip 内只含该插件。zip 内含 manifest.json 与 plugins/<pluginId>.json。",
+      "export.name": "清单名称（可选）",
+      "export.description": "清单描述（可选）",
+      "export.button": "导出插件包并下载",
+      "export.busy": "导出插件包",
+      "export.done": "已开始下载 {filename}。",
+      "import.busy": "导入",
+      "error.prefix": "错误：",
+      "error.readFailed": "错误：读取文件失败。",
+      "error.tooLarge": "错误：文件超过 64 MiB 导入上限。"
+    }
+    const en = {
+      "tab.title": "Import / Export",
+      "no.session": "No active session. Open a session first to import or export.",
+      "list.title": "Dynamic plugins in this session",
+      "list.hint": "Dynamic Cordis plugins this session created with cordis_define. Check ones to download the plugin bundle.",
+      "list.loading": "Reading…",
+      "list.refresh": "Refresh",
+      "list.empty": "No dynamic plugins yet.",
+      "list.current": "Current {current} · {count} package(s)",
+      "list.selectAll": "Select all",
+      "list.clear": "Clear selection",
+      "import.title": "Import plugins (local file upload)",
+      "import.hint": "Select a zip bundle to upload and import.",
+      "import.activate": "Activate the current version right after importing",
+      "import.button": "Choose file and import",
+      "import.reading": "Reading and uploading {name} …",
+      "export.title": "Export plugin bundle zip (browser download)",
+      "export.hint": "{count} plugin(s) selected; a single selected plugin yields a zip containing only it. The zip contains manifest.json and plugins/<pluginId>.json.",
+      "export.name": "Bundle name (optional)",
+      "export.description": "Bundle description (optional)",
+      "export.button": "Export bundle and download",
+      "export.busy": "Exporting bundle",
+      "export.done": "Started downloading {filename}.",
+      "import.busy": "Importing",
+      "error.prefix": "Error: ",
+      "error.readFailed": "Error: file read failed.",
+      "error.tooLarge": "Error: file exceeds the 64 MiB import limit."
+    }
+
     const S = {
       section: { display: "flex", flexDirection: "column", gap: 18, maxWidth: 760, width: "100%" },
       card: { display: "flex", flexDirection: "column", gap: 10, border: "1px solid var(--dsw-alias-border-l2)", borderRadius: 10, padding: 14, background: "var(--dsw-alias-bg-layer-3)" },
@@ -80,6 +139,8 @@ window.__ModuleLoader__.load({
 
     function TransferPanel(props) {
       const useSessions = props.useSessions
+      // 槽渲染器向声明了 locale 的条目注入 t prop。缺失时用键名兜底。
+      const t = props.t || ((key, params) => key)
       const session = useSessions((state) => state.phase === "ready" ? { ready: true, current: state.current } : { ready: false, current: null })
       const [plugins, setPlugins] = React.useState([])
       const [listStatus, setListStatus] = React.useState("idle")
@@ -134,9 +195,9 @@ window.__ModuleLoader__.load({
         setMessage("")
         Promise.resolve().then(action).then((value) => {
           consume(value)
-          setMessage("已开始下载 " + value.filename + "。")
+          setMessage(t("export.done", { filename: value.filename }))
         }, (error) => {
-          setMessage("Error: " + (error && error.message ? error.message : String(error)))
+          setMessage(t("error.prefix") + (error && error.message ? error.message : String(error)))
         }).finally(() => setBusy(""))
       }
 
@@ -150,8 +211,12 @@ window.__ModuleLoader__.load({
         event.target.value = ""
         if (!file) return
         if (!session.ready || session.current === null) return
-        setBusy("导入")
-        setMessage("正在读取并上传 " + file.name + " …")
+        if (file.size > 64 * 1024 * 1024) {
+          setMessage(t("error.tooLarge"))
+          return
+        }
+        setBusy(t("import.busy"))
+        setMessage(t("import.reading", { name: file.name }))
         const reader = new FileReader()
         reader.onload = () => {
           const base64 = arrayBufferToBase64(reader.result)
@@ -159,12 +224,12 @@ window.__ModuleLoader__.load({
             setMessage(JSON.stringify(value, null, 2))
             refresh()
           }, (error) => {
-            setMessage("Error: " + (error && error.message ? error.message : String(error)))
+            setMessage(t("error.prefix") + (error && error.message ? error.message : String(error)))
           }).finally(() => setBusy(""))
         }
         reader.onerror = () => {
           setBusy("")
-          setMessage("Error: 文件读取失败。")
+          setMessage(t("error.readFailed"))
         }
         reader.readAsArrayBuffer(file)
       }
@@ -179,7 +244,7 @@ window.__ModuleLoader__.load({
 
       if (!session.ready || session.current === null) {
         return React.createElement("div", { style: S.section },
-          React.createElement("p", { style: S.hint }, "没有活动会话。请先打开一个会话，再使用导入 / 导出。"))
+          React.createElement("p", { style: S.hint }, t("no.session")))
       }
 
       const pluginIds = plugins.map((plugin) => String(plugin.pluginId || ""))
@@ -187,64 +252,77 @@ window.__ModuleLoader__.load({
 
       return React.createElement("div", { style: S.section },
         React.createElement("section", { style: S.card },
-          React.createElement("h3", { style: S.title }, "本会话动态插件"),
-          React.createElement("p", { style: S.hint }, "列出当前会话用 cordis_define 创建的动态 Cordis Plugin。勾选后可直接下载插件包。"),
+          React.createElement("h3", { style: S.title }, t("list.title")),
+          React.createElement("p", { style: S.hint }, t("list.hint")),
           React.createElement("div", { style: S.row },
-            button(listStatus === "loading" ? "读取中…" : "刷新", listStatus === "loading", refresh)
+            button(listStatus === "loading" ? t("list.loading") : t("list.refresh"), listStatus === "loading", refresh)
           ),
           listStatus === "error" ? React.createElement("p", { style: S.error }, listError) : null,
           plugins.length === 0 && listStatus === "ready"
-            ? React.createElement("p", { style: S.hint }, "暂无动态插件。")
+            ? React.createElement("p", { style: S.hint }, t("list.empty"))
             : plugins.map(function (plugin) {
                 return React.createElement("label", { key: plugin.pluginId, style: S.check },
                   React.createElement("input", { type: "checkbox", checked: selected[plugin.pluginId] === true, onChange: (event) => setSelected((previous) => Object.assign({}, previous, { [plugin.pluginId]: event.target.checked })) }),
                   React.createElement("strong", null, String(plugin.pluginId)),
-                  React.createElement("span", { style: S.muted }, "当前版本 " + String(plugin.currentPackageId || "—") + " · " + String((plugin.packages || []).length) + " 个 Package"))
+                  React.createElement("span", { style: S.muted }, t("list.current", { current: String(plugin.currentPackageId || "—"), count: String((plugin.packages || []).length) })))
               }),
           React.createElement("div", { style: S.row },
-            button("全选", plugins.length === 0, () => {
+            button(t("list.selectAll"), plugins.length === 0, () => {
               const next = {}
               for (const id of pluginIds) next[id] = true
               setSelected(next)
             }),
-            button("清空选择", selectedIds.length === 0, () => setSelected({})))
+            button(t("list.clear"), selectedIds.length === 0, () => setSelected({})))
         ),
 
         React.createElement("section", { style: S.card },
-          React.createElement("h3", { style: S.title }, "导入插件（本地文件上传）"),
-          React.createElement("p", { style: S.hint }, "选择 zip 插件包后自动上传导入。" ),
+          React.createElement("h3", { style: S.title }, t("import.title")),
+          React.createElement("p", { style: S.hint }, t("import.hint")),
           React.createElement("input", { ref: fileInputRef, type: "file", accept: ".zip,application/zip", style: S.hidden, onChange: handleFile }),
           React.createElement("div", { style: S.row },
             React.createElement("label", { style: S.check },
               React.createElement("input", { type: "checkbox", checked: activate, onChange: (event) => setActivate(event.target.checked) }),
-              React.createElement("span", null, "导入后立即激活 current 版本")),
-            button("选择文件并导入", false, pickFileAndImport))
+              React.createElement("span", null, t("import.activate"))),
+            button(t("import.button"), false, pickFileAndImport))
         ),
 
         React.createElement("section", { style: S.card },
-          React.createElement("h3", { style: S.title }, "导出插件包 zip（浏览器下载）"),
-          React.createElement("p", { style: S.hint }, "已选 " + String(selectedIds.length) + " 个插件；勾选 1 个插件时 zip 内只含该插件。zip 内含 manifest.json 与 plugins/<pluginId>.json。" ),
+          React.createElement("h3", { style: S.title }, t("export.title")),
+          React.createElement("p", { style: S.hint }, t("export.hint", { count: String(selectedIds.length) })),
           React.createElement("div", { style: S.row },
-            input(bundleName, setBundleName, "清单名称（可选）"),
-            input(bundleDescription, setBundleDescription, "清单描述（可选）")),
+            input(bundleName, setBundleName, t("export.name")),
+            input(bundleDescription, setBundleDescription, t("export.description"))),
           React.createElement("div", { style: S.row },
-            button("导出插件包并下载", selectedIds.length === 0, () => runDownload("导出插件包", () => invoke("exportBundlePayload", [session.current, selectedIds, bundleName.trim() || null, bundleDescription.trim() || null]), (value) => downloadBase64(value.filename, value.base64, value.contentType))))
+            button(t("export.button"), selectedIds.length === 0, () => runDownload(t("export.busy"), () => invoke("exportBundlePayload", [session.current, selectedIds, bundleName.trim() || null, bundleDescription.trim() || null]), (value) => downloadBase64(value.filename, value.base64, value.contentType))))
         ),
 
         message ? React.createElement("pre", { style: S.mono }, message) : null
       )
     }
 
-    const inject = ["slots", "remote"]
+    // 'locale' 是必需服务。apply 等 locale 准备好才执行。
+    const inject = ["slots", "remote", "locale"]
 
     async function apply(ctx) {
       const disposeRemote = await ctx.remote.$mount(CONTRIBUTION)
       ctx.effect(() => disposeRemote, "cordis-transfer-plugin: remote contribution")
+      // 注册面板字典。locale 未装载时跳过。
+      const locale = ctx.get("locale")
+      if (locale !== undefined) {
+        const disposeLocale = locale.register(NS, { zh, en })
+        ctx.effect(() => disposeLocale, "cordis-transfer-plugin: locale dictionaries")
+      }
+      // resolveSlotLabel 无参调用标签 thunk。thunk 每次读当前语言的 tab.title。
+      // locale 缺失时用固定中文。
+      const tabLabel = locale === undefined
+        ? "导入 / 导出"
+        : () => locale.bind(NS)("tab.title")
       ctx.slots.inject("settings.plugins.tab", () => ctx.slots.register({
         name: "settings.plugins.tab",
         id: "transfer",
         order: 20,
-        label: "导入 / 导出"
+        locale: NS,
+        label: tabLabel
       }, (props) => React.createElement(TransferPanel, Object.assign({}, props, { ctx: ctx }))))
     }
 
