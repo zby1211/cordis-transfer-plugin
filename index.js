@@ -8,7 +8,7 @@ import { homedir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createRequire } from 'node:module'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, statSync, writeFileSync } from 'node:fs'
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate'
 import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 
@@ -36,6 +36,9 @@ function harnessRequire() {
   throw new Error('cordis-transfer-plugin: cannot locate @deepseek-ai/dsh-tools; is the plugin running inside a dsh profile?')
 }
 
+// 导入包的解压上限违例（防 zip bomb）：与“无效 zip”区分开，错误信息直接透传给用户。
+class BundleLimitError extends Error {}
+
 export async function apply(ctx) {
   const peerRequire = harnessRequire()
   const { defineTool } = await import(pathToFileURL(peerRequire.resolve('@deepseek-ai/dsh-tools')))
@@ -43,6 +46,14 @@ export async function apply(ctx) {
   const FORMAT_SINGLE = 'dsh-cordis-plugin'
   const FORMAT_BUNDLE = 'dsh-cordis-plugin-bundle'
   const FORMAT_VERSION = 1
+
+  // 导入解压上限。deflate 条目按声明的 originalSize 分配缓冲。
+  // stored 条目按声明的 compressed size 拷贝。
+  // 两者都在解压前拦截，防止恶意 zip 耗尽内存。
+  const MAX_ZIP_INPUT_BYTES = 64 * 1024 * 1024
+  const MAX_ZIP_ENTRY_BYTES = 64 * 1024 * 1024
+  const MAX_ZIP_TOTAL_BYTES = 256 * 1024 * 1024
+  const MAX_ZIP_ENTRIES = 4096
 
   function resolveContext(exec) {
     if (exec === undefined || exec.agent === undefined) {
@@ -335,9 +346,37 @@ export async function apply(ctx) {
   function parseBundleZip(bytes) {
     let entries
     try {
-      entries = unzipSync(bytes)
+      let declaredTotal = 0
+      let entryCount = 0
+      entries = unzipSync(bytes, {
+        filter(file) {
+          entryCount += 1
+          if (entryCount > MAX_ZIP_ENTRIES) {
+            throw new BundleLimitError('plugin bundle zip has more than ' + MAX_ZIP_ENTRIES + ' entries, exceeding the import limit')
+          }
+          const alloc = file.compression === 0 ? file.size : file.originalSize
+          if (alloc > MAX_ZIP_ENTRY_BYTES) {
+            throw new BundleLimitError('plugin bundle zip entry "' + file.name + '" expands to ' + alloc
+              + ' bytes, exceeding the ' + MAX_ZIP_ENTRY_BYTES + '-byte per-file limit')
+          }
+          declaredTotal += alloc
+          if (declaredTotal > MAX_ZIP_TOTAL_BYTES) {
+            throw new BundleLimitError('plugin bundle zip expands to more than ' + MAX_ZIP_TOTAL_BYTES
+              + ' bytes total, exceeding the import limit')
+          }
+          return true
+        }
+      })
     } catch (error) {
+      if (error instanceof BundleLimitError) throw error
       throw new Error('invalid plugin bundle zip: ' + (error && error.message ? error.message : String(error)))
+    }
+    // 解压后再按实际字节复核总量，作第二道检查。
+    let actualTotal = 0
+    for (const name of Object.keys(entries)) actualTotal += entries[name].byteLength
+    if (actualTotal > MAX_ZIP_TOTAL_BYTES) {
+      throw new BundleLimitError('plugin bundle zip expands to more than ' + MAX_ZIP_TOTAL_BYTES
+        + ' bytes total, exceeding the import limit')
     }
     const manifestBytes = entries['manifest.json']
     if (manifestBytes === undefined) throw new Error('plugin bundle zip has no manifest.json')
@@ -370,6 +409,10 @@ export async function apply(ctx) {
     const hasZipMagic = bytes.length >= 2 && bytes[0] === 0x50 && bytes[1] === 0x4b
     if (!hasZipMagic && !lower.endsWith('.zip')) {
       throw new Error('unsupported plugin file: expected a ' + FORMAT_BUNDLE + ' zip bundle')
+    }
+    if (bytes.length > MAX_ZIP_INPUT_BYTES) {
+      throw new BundleLimitError('plugin bundle zip is ' + bytes.length + ' bytes, exceeding the '
+        + MAX_ZIP_INPUT_BYTES + '-byte input limit')
     }
     const records = parseBundleZip(bytes)
     const imported = await importBundle(agent, runner, records, activate)
@@ -512,8 +555,13 @@ export async function apply(ctx) {
     activate: { type: 'boolean', description: '导入后是否立即运行各 Plugin 的 current 版本；默认 false（只建立定义）。' }
   }, async function (args, exec) {
     const { agent, runner } = resolveContext(exec)
-    const bytes = readFileSync(String(args.path))
-    const result = await importPayloadBytes(agent, runner, bytes, String(args.path), args.activate === true)
-    return { ok: true, path: String(args.path), result: result }
+    const path = String(args.path)
+    const size = statSync(path).size
+    if (size > MAX_ZIP_INPUT_BYTES) {
+      throw new BundleLimitError('plugin bundle zip is ' + size + ' bytes, exceeding the ' + MAX_ZIP_INPUT_BYTES + '-byte input limit')
+    }
+    const bytes = readFileSync(path)
+    const result = await importPayloadBytes(agent, runner, bytes, path, args.activate === true)
+    return { ok: true, path: path, result: result }
   })
 }
