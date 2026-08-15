@@ -27,8 +27,17 @@ Open **Settings → Plugins → Import / Export**:
 
 ## Installation
 
-This is a static profile bundle (not an in-memory dynamic plugin). Install the
-tarball from GitHub Releases:
+This is a static profile bundle (not an in-memory dynamic plugin). Install it
+from npm or from a GitHub Release tarball.
+
+**From npm:**
+
+```bash
+npm pack cordis-transfer-plugin
+dsh plugin --profile web add ./cordis-transfer-plugin-<version>.tgz
+```
+
+**From GitHub Releases:**
 
 1. Download the latest `cordis-transfer-plugin-<version>.tgz` from Releases.
 2. Install it into the web profile:
