@@ -1,6 +1,6 @@
 {
   "name": "cordis-transfer-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DSH 持久化插件：动态 Cordis Plugin 导入/导出；导出统一为插件包 zip（manifest + plugins/*.json，可只含一个插件），浏览器下载；导入为本地文件选择上传",
   "type": "module",
   "main": "index.js",
