@@ -50,6 +50,7 @@ jobs:
           if npm view "cordis-transfer-plugin@${VERSION}" version >/dev/null 2>&1; then
             echo "Version ${VERSION} already exists on npm; skipping publish."
             echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 1
           else
             npm publish ./dist/cordis-transfer-plugin-*.tgz --access public --provenance
             echo "skipped=false" >> "$GITHUB_OUTPUT"
