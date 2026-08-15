@@ -21,7 +21,20 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22
-          registry-url: https://registry.npmjs.org/
+          # Note: no registry-url / token here — publishing uses npm Trusted
+          # Publishing (OIDC). A registry-url would make setup-node write an
+          # .npmrc that can shadow the OIDC credential.
+
+      - name: Validate tag matches package version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Release tag ${GITHUB_REF_NAME} does not match package.json version ${PKG_VERSION}. Bump package.json (or fix the tag) so the tarball is named correctly."
+            exit 1
+          fi
+          echo "Tag ${GITHUB_REF_NAME} matches package version ${PKG_VERSION}."
 
       - name: Build tarball
         run: |
@@ -31,7 +44,7 @@ jobs:
       - name: Publish to npm
         id: npm
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION="$(node -p "require('./package.json').version")"
           if npm view "cordis-transfer-plugin@${VERSION}" version >/dev/null 2>&1; then
             echo "Version ${VERSION} already exists on npm; skipping publish."
             echo "skipped=true" >> "$GITHUB_OUTPUT"
@@ -45,12 +58,24 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.CORDIS_GITHUB_TOKEN }}
         run: |
-          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            echo "Release ${GITHUB_REF_NAME} exists; uploading asset."
-            gh release upload "${GITHUB_REF_NAME}" dist/cordis-transfer-plugin-*.tgz --clobber
+          RELEASE="${GITHUB_REF_NAME}"
+          if gh release view "$RELEASE" >/dev/null 2>&1; then
+            # Delete stale cordis-transfer-plugin-*.tgz assets first so a
+            # mismatched tarball can never linger in the release.
+            assets="$(gh release view "$RELEASE" --json assets -q '.assets[].name' 2>/dev/null || true)"
+            for a in $assets; do
+              case "$a" in
+                cordis-transfer-plugin-*.tgz)
+                  echo "Removing stale asset: $a"
+                  gh release delete-asset "$RELEASE" "$a" --yes
+                  ;;
+              esac
+            done
+            echo "Uploading tarball to release ${RELEASE}."
+            gh release upload "$RELEASE" dist/cordis-transfer-plugin-*.tgz --clobber
           else
-            gh release create "${GITHUB_REF_NAME}" \
+            gh release create "$RELEASE" \
               dist/cordis-transfer-plugin-*.tgz \
-              --title "${GITHUB_REF_NAME}" \
+              --title "$RELEASE" \
               --generate-notes
           fi
