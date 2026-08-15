@@ -90,3 +90,27 @@ Exports and imports use a single zip bundle format, conventionally named `*.dsh-
 - Plugins with Client code enter the normal approval flow when `activate=true`.
 
   含 Client 代码且 `activate=true` 时进入正常审批流程。
+
+## Import Limits
+
+Import rejects a bundle that exceeds any of these limits (all generously above
+realistic bundles; the guards exist to stop zip-bomb style memory exhaustion):
+
+| Limit | Value |
+| --- | --- |
+| Zip file size (input) | 64 MiB |
+| Declared size of one entry | 64 MiB |
+| Total declared size of all entries | 256 MiB |
+| Entry count | 4096 |
+
+## 导入限制
+
+超过以下任一上限的插件包会被拒绝导入（上限远高于真实插件包规模，仅用于阻止
+zip bomb 式内存耗尽攻击）：
+
+| 限制 | 上限 |
+| --- | --- |
+| zip 文件大小（输入） | 64 MiB |
+| 单个条目的声明大小 | 64 MiB |
+| 全部条目的声明总大小 | 256 MiB |
+| 条目数 | 4096 |
